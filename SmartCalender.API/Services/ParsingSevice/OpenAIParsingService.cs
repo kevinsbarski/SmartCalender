@@ -17,26 +17,12 @@ namespace SmartCalender.API.Services.ParsingSevice
             _openAiApiKey = configuration.GetSection("OpenAI:ApiKey").Value;
         }
 
-        public EventResponse ParseEventFromText(string text)
+        public async Task<EventResponse> ParseEventFromText(string text)
         {
 
             ChatClient client = new(model: "gpt-4o", _openAiApiKey);
             var eventDetails = new EventDetails();
-            //{
-            //    Title = "",
-            //    Location = "",
-            //    Description = "",
-            //    Start = new Models.EventDateTime
-            //    {
-            //        DateTime = "",
-            //        TimeZone = ""
-            //    },
-            //    End = new Models.EventDateTime
-            //    {
-            //        DateTime = "",
-            //        TimeZone = ""
-            //    }
-            //};
+
             System.DateTime present = System.DateTime.UtcNow;
 
             string eventDetailsJson = JsonSerializer.Serialize(eventDetails);
@@ -52,8 +38,8 @@ namespace SmartCalender.API.Services.ParsingSevice
                     $"If no date is provided, assume that the event is on the closest future date mentioned, based on the context of the text.\n\n" +
                     $"Also relate to Asia/Jerusalem timezone please, GMT+2 Israel time." +
                     $"Text: \"{text}\"";
-            var completion = client.CompleteChat(prompt);
-            EventDetails result = JsonSerializer.Deserialize<EventDetails>(completion.Value.Content[0].Text);
+            var completion =  await client.CompleteChatAsync(prompt);
+            EventDetails? result = JsonSerializer.Deserialize<EventDetails>(completion.Value.Content[0].Text);
 
 
             return new EventResponse
@@ -62,13 +48,6 @@ namespace SmartCalender.API.Services.ParsingSevice
                 Message = "please review the event before confirming"
             };
         }
-
-            
-
-            
-
-            // Implementation using OpenAI API to parse text into structured event
-           // throw new NotImplementedException();
         }
     }
 

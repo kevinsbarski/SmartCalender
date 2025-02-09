@@ -9,17 +9,23 @@ namespace SmartCalender.API.Controllers;
 [Route("api/[controller]")]
 public class EventController : ControllerBase
 {
-    private readonly IParsingService _OpenAIParsingServicervice;
-    public EventController(IParsingService OpenAIParsingService)
+    private readonly IEventService _eventService;
+    public EventController(IEventService eventService)
     {
-        _OpenAIParsingServicervice = OpenAIParsingService;
+        _eventService = eventService;
     }
 
     [HttpPost("parse")]
-    public ActionResult ParseEvent([FromBody] EventRequest request)
+    public async Task<ActionResult<EventResponse>> ParseEvent([FromBody] EventRequest request)
     {
-        var parsedEvent = _OpenAIParsingServicervice.ParseEventFromText(request.EventAsText);
+        var parsedEvent = _eventService.ParseEventFromText(request.EventAsText);
         return Ok(parsedEvent);
+    }
+    [HttpPost("create")]
+    public async Task<ActionResult<EventResponse>> CreateEvent ([FromBody] EventDetails eventDetails)
+    {
+        var createdEvent = await _eventService.CreateCalendarEvent(eventDetails);
+        return Ok(createdEvent);
     }
 }
 

@@ -13,32 +13,34 @@ namespace SmartCalender.API.Services.CalenderService
 
         public GoogleCalendarService()
         {
-            _calendarService = InitializeService();
+            _calendarService = InitializeService().GetAwaiter().GetResult();
         }
 
-        private CalendarService InitializeService()
+        private async Task<CalendarService> InitializeService()
         {
             UserCredential credential;
 
             using (var stream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
             {
                 string credPath = "token.json";
-                credential = GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    GoogleClientSecrets.Load(stream).Secrets,
+                var secrets = await GoogleClientSecrets.FromStreamAsync(stream);
+
+                credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                    secrets.Secrets,
                     new[] { CalendarService.Scope.Calendar },
                     "user",
                     CancellationToken.None,
-                    new FileDataStore(credPath, true)).Result;
+                    new FileDataStore(credPath, true));
             }
             return new CalendarService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
-                ApplicationName = "Event Scheduler"
+                ApplicationName = "SmartCalender"
             });
         }
 
         
-        public void CreateEvent(EventDetails eventDetails)
+        public async Task CreateEvent(EventDetails eventDetails)
         {
             var newEvent = new Event()
             {
@@ -59,7 +61,7 @@ namespace SmartCalender.API.Services.CalenderService
             };
 
             var calendarId = "primary";
-            _calendarService.Events.Insert(newEvent, calendarId).Execute();
+            await _calendarService.Events.Insert(newEvent, calendarId).ExecuteAsync();
         }
 
     }
