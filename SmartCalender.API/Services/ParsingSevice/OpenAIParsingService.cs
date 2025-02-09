@@ -21,23 +21,23 @@ namespace SmartCalender.API.Services.ParsingSevice
         {
 
             ChatClient client = new(model: "gpt-4o", _openAiApiKey);
-            var eventDetails = new EventDetails
-            {
-                Title = "[event title]",
-                Location = "[event location]",
-                Description = "[event description]",
-                Start = new EventDateTime
-                {
-                    DateTime = "[ISO 8601 start time]",
-                    TimeZone = "Asia/Jerusalem"
-                },
-                End = new EventDateTime
-                {
-                    DateTime = "[ISO 8601 end time]",
-                    TimeZone = "Asia/Jerusalem"
-                }
-            };
-            DateTime present = DateTime.UtcNow;
+            var eventDetails = new EventDetails();
+            //{
+            //    Title = "",
+            //    Location = "",
+            //    Description = "",
+            //    Start = new Models.EventDateTime
+            //    {
+            //        DateTime = "",
+            //        TimeZone = ""
+            //    },
+            //    End = new Models.EventDateTime
+            //    {
+            //        DateTime = "",
+            //        TimeZone = ""
+            //    }
+            //};
+            System.DateTime present = System.DateTime.UtcNow;
 
             string eventDetailsJson = JsonSerializer.Serialize(eventDetails);
 

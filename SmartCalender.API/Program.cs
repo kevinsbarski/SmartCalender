@@ -1,4 +1,7 @@
+using Google.Apis.Calendar.v3;
 using OpenAI;
+using SmartCalender.API.Models.Configuration;
+using SmartCalender.API.Services.CalenderService;
 using SmartCalender.API.Services.ParsingSevice;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +14,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<IParsingService, OpenAIParsingService>();
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<ICalendarService, GoogleCalendarService>();
+builder.Services.Configure<GoogleApiSettings>(builder.Configuration.GetSection(nameof(GoogleApiSettings)));
+
 
 var app = builder.Build();
 
