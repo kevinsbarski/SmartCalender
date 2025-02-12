@@ -10,58 +10,68 @@ namespace SmartCalender.API.Services.CalenderService
     public class GoogleCalendarService : ICalendarService
     {
         private readonly CalendarService _calendarService;
+        private readonly IConfiguration _configuration;//testing
 
-        public GoogleCalendarService()
+        public static async Task<GoogleCalendarService> CreateAsync(IConfiguration configuration) 
         {
-            _calendarService = InitializeService().GetAwaiter().GetResult();
+            var calendarService = await InitializeServiceAsync(configuration);  
+            return new GoogleCalendarService(calendarService, configuration);
         }
 
-        private async Task<CalendarService> InitializeService()
+
+        private GoogleCalendarService(CalendarService calendarService, IConfiguration configuration)
         {
-            UserCredential credential;
+            _calendarService = calendarService;
+            _configuration = configuration;
+        }
 
-            using (var stream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read))
+        private static async Task<CalendarService> InitializeServiceAsync(IConfiguration configuration)
+        {
+            using var stream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read);
+
+            var clientSecrets = new ClientSecrets
             {
-                string credPath = "token.json";
-                var secrets = await GoogleClientSecrets.FromStreamAsync(stream);
+                ClientId = configuration["GoogleApiSettings:ClientId"],
+                ClientSecret = configuration["GoogleApiSettings:ClientSecret"]
+            };
 
-                credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                    secrets.Secrets,
-                    new[] { CalendarService.Scope.Calendar },
-                    "user",
-                    CancellationToken.None,
-                    new FileDataStore(credPath, true));
-            }
-            return new CalendarService(new BaseClientService.Initializer()
+            //   string credPath = "token.json";
+            var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+                clientSecrets,
+                new[] { CalendarService.Scope.Calendar, CalendarService.Scope.CalendarEvents },
+                "user",
+                CancellationToken.None);
+           //     new FileDataStore(credPath, true));
+
+            return new CalendarService(new BaseClientService.Initializer
             {
                 HttpClientInitializer = credential,
-                ApplicationName = "SmartCalender"
+                ApplicationName = configuration["GoogleApiSettings:ApplicationName"]
             });
         }
 
-        
-        public async Task CreateEvent(EventDetails eventDetails)
+        public async Task<CalendarEvent> CreateEvent(CalendarEvent calendarEvent)
         {
-            var newEvent = new Event()
+            var newEvent = new Event
             {
-                Summary = eventDetails.Title,
-                Location = eventDetails.Location,
-                Description = eventDetails.Description,
-                Start = new EventDateTime()
+                Summary = calendarEvent.Summary,
+                Location = calendarEvent.Location,
+                Description = calendarEvent.Description,
+                Start = new EventDateTime
                 {
-                    DateTime = eventDetails.Start,
+                    DateTimeDateTimeOffset = calendarEvent.Start,
                     TimeZone = "Asia/Jerusalem"
                 },
-                End = new EventDateTime()
+                End = new EventDateTime
                 {
-                    DateTime = eventDetails.End,
+                    DateTimeDateTimeOffset = calendarEvent.End,
                     TimeZone = "Asia/Jerusalem"
-                },
-
+                }
             };
 
             var calendarId = "primary";
             await _calendarService.Events.Insert(newEvent, calendarId).ExecuteAsync();
+            return calendarEvent;
         }
 
     }

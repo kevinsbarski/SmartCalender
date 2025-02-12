@@ -2,6 +2,6 @@
 
 public class EventResponse
 {
-    public EventDetails ParsedEvent { get; set; }
+    public CalendarEvent ParsedEvent { get; set; }
     public string Message { get; set; }
 }

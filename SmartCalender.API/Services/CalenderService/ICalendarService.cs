@@ -4,6 +4,6 @@ namespace SmartCalender.API.Services.CalenderService
 {
     public interface ICalendarService
     {
-        Task CreateEvent(EventDetails calendarEvent);
+        Task<CalendarEvent> CreateEvent(CalendarEvent calendarEvent);
     }
 }

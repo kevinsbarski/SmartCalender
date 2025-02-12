@@ -16,11 +16,18 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddScoped<IEventService, EventService>();
-builder.Services.AddScoped<IParsingService, OpenAIParsingService>();
-builder.Services.AddScoped<ICalendarService, GoogleCalendarService>();
-builder.Services.Configure<GoogleApiSettings>(builder.Configuration.GetSection(nameof(GoogleApiSettings)));
 
+builder.Services.AddScoped<IParsingService, OpenAIParsingService>();
+//builder.Services.AddScoped<ICalendarService, GoogleCalendarService>();
+builder.Services.Configure<GoogleApiSettings>(builder.Configuration.GetSection(nameof(GoogleApiSettings)));
+builder.Services.AddSingleton<ICalendarService>(provider =>
+{   ICalendarService service = GoogleCalendarService
+        .CreateAsync(provider.GetRequiredService<IConfiguration>())
+        .GetAwaiter()
+        .GetResult();
+    return service;
+});
+builder.Services.AddScoped<IEventService, EventService>();
 
 var app = builder.Build();
 

@@ -19,7 +19,7 @@ namespace SmartCalender.API.Services.EventService
         
         public async Task<EventResponse> ParseEventFromText(string text)
         {
-            var parsedEvent = await _parsingService.ParseEventFromText(text);
+            var parsedEvent = await _parsingService.ParseEventFromTextAsync(text);
             return new EventResponse
             {
                 ParsedEvent = parsedEvent.ParsedEvent,
@@ -27,7 +27,7 @@ namespace SmartCalender.API.Services.EventService
             };
         }
   
-        public async Task<EventResponse> CreateCalendarEvent(EventDetails eventDetails)
+        public async Task<EventResponse> CreateCalendarEvent(CalendarEvent eventDetails)
         {
             await _calendarService.CreateEvent(eventDetails);
             return new EventResponse

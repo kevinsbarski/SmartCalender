@@ -18,11 +18,11 @@ public class EventController : ControllerBase
     [HttpPost("parse")]
     public async Task<ActionResult<EventResponse>> ParseEvent([FromBody] EventRequest request)
     {
-        var parsedEvent = _eventService.ParseEventFromText(request.EventAsText);
+        var parsedEvent = await _eventService.ParseEventFromText(request.EventAsText);
         return Ok(parsedEvent);
     }
     [HttpPost("create")]
-    public async Task<ActionResult<EventResponse>> CreateEvent ([FromBody] EventDetails eventDetails)
+    public async Task<ActionResult<EventResponse>> CreateEvent ([FromBody] CalendarEvent eventDetails)
     {
         var createdEvent = await _eventService.CreateCalendarEvent(eventDetails);
         return Ok(createdEvent);
