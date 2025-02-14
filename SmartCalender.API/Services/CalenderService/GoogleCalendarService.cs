@@ -4,54 +4,44 @@ using Google.Apis.Util.Store;
 using Google.Apis.Services;
 using SmartCalender.API.Models;
 using Google.Apis.Calendar.v3.Data;
+using SmartCalender.API.Models.Configuration;
+using System.Runtime;
 
 namespace SmartCalender.API.Services.CalenderService
 {
     public class GoogleCalendarService : ICalendarService
     {
-        private readonly CalendarService _calendarService;
-        private readonly IConfiguration _configuration;//testing
+        private readonly IGoogleApiSettings _googleApiSettings;
 
-        public static async Task<GoogleCalendarService> CreateAsync(IConfiguration configuration) 
+        public GoogleCalendarService(IGoogleApiSettings googleApiSettings)
         {
-            var calendarService = await InitializeServiceAsync(configuration);  
-            return new GoogleCalendarService(calendarService, configuration);
+            _googleApiSettings = googleApiSettings;
+
         }
 
 
-        private GoogleCalendarService(CalendarService calendarService, IConfiguration configuration)
+        public async Task<Event> CreateEvent(CalendarEvent calendarEvent)
         {
-            _calendarService = calendarService;
-            _configuration = configuration;
-        }
 
-        private static async Task<CalendarService> InitializeServiceAsync(IConfiguration configuration)
-        {
-            using var stream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read);
-
-            var clientSecrets = new ClientSecrets
+            UserCredential credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+            new ClientSecrets()
             {
-                ClientId = configuration["GoogleApiSettings:ClientId"],
-                ClientSecret = configuration["GoogleApiSettings:ClientSecret"]
-            };
+                ClientId = _googleApiSettings.ClientId,
+                ClientSecret = _googleApiSettings.ClientSecret
+            },
+            new[] { CalendarService.Scope.Calendar, CalendarService.Scope.CalendarEvents },
+            _googleApiSettings.User,
+            CancellationToken.None);
 
-            //   string credPath = "token.json";
-            var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-                clientSecrets,
-                new[] { CalendarService.Scope.Calendar, CalendarService.Scope.CalendarEvents },
-                "user",
-                CancellationToken.None);
-           //     new FileDataStore(credPath, true));
 
-            return new CalendarService(new BaseClientService.Initializer
+            var services = new CalendarService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = credential,
-                ApplicationName = configuration["GoogleApiSettings:ApplicationName"]
+                ApplicationName = _googleApiSettings.ApplicationName,
             });
-        }
 
-        public async Task<CalendarEvent> CreateEvent(CalendarEvent calendarEvent)
-        {
+
+
             var newEvent = new Event
             {
                 Summary = calendarEvent.Summary,
@@ -68,10 +58,11 @@ namespace SmartCalender.API.Services.CalenderService
                     TimeZone = "Asia/Jerusalem"
                 }
             };
+            var eventRequest = services.Events.Insert(newEvent, _googleApiSettings.CalendarId);
+            var requestCreate = await eventRequest.ExecuteAsync();
+            return requestCreate;
 
-            var calendarId = "primary";
-            await _calendarService.Events.Insert(newEvent, calendarId).ExecuteAsync();
-            return calendarEvent;
+            
         }
 
     }

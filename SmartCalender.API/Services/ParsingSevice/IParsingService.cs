@@ -5,6 +5,6 @@ namespace SmartCalender.API.Services.ParsingSevice;
 
 public interface IParsingService
 {
-    Task<EventResponse> ParseEventFromTextAsync(string text);
+    Task<CalendarEvent> ParseEventFromTextAsync(string text);
 }
 

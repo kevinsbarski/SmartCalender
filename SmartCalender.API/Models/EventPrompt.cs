@@ -1,6 +1,6 @@
 ﻿namespace SmartCalender.API.Models;
 
-public class EventRequest
+public class EventPrompt
 {
     public string EventAsText { get; set; }
 }

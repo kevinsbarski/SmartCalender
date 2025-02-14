@@ -17,7 +17,7 @@ namespace SmartCalender.API.Services.ParsingSevice
             _openAiApiKey = configuration.GetSection("OpenAI:ApiKey").Value;
         }
 
-        public async Task<EventResponse> ParseEventFromTextAsync(string text)
+        public async Task<CalendarEvent> ParseEventFromTextAsync(string text)
         {
 
             ChatClient client = new(model: "gpt-4o", _openAiApiKey);
@@ -44,11 +44,7 @@ namespace SmartCalender.API.Services.ParsingSevice
             CalendarEvent? result = JsonSerializer.Deserialize<CalendarEvent>(completion.Value.Content[0].Text);
 
 
-            return new EventResponse
-            {
-                ParsedEvent = result,
-                Message = "please review the event before confirming"
-            };
+            return result;
         }
         }
     }

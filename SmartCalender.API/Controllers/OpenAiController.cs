@@ -15,7 +15,7 @@ namespace SmartCalender.API.Controllers
         }
 
         [HttpPost("parse")]
-        public async Task<ActionResult<EventResponse>> ParseEventFromText([FromBody] EventRequest request)
+        public async Task<ActionResult<CalendarEvent>> ParseEventFromText([FromBody] EventPrompt request)
         {
             var parsedEvent = await _parsingService.ParseEventFromTextAsync(request.EventAsText);
             return Ok(parsedEvent);

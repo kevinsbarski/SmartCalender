@@ -1,42 +1,46 @@
-using Google.Apis.Calendar.v3;
-using OpenAI;
+
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Options;
 using SmartCalender.API.Models.Configuration;
 using SmartCalender.API.Services.CalenderService;
 using SmartCalender.API.Services.EventService;
 using SmartCalender.API.Services.ParsingSevice;
+using Microsoft.AspNetCore.Authentication.Google;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var googleApiSettings = builder.Configuration.GetSection("GoogleApiSettings");
+builder.Services.AddScoped<IGoogleApiSettings>(sp =>
+    sp.GetRequiredService<IOptions<GoogleApiSettings>>().Value);
+
+builder.Services.Configure<GoogleApiSettings>(builder.Configuration.GetSection(nameof(GoogleApiSettings)));
+builder.Services.AddScoped<IParsingService, OpenAIParsingService>();
+builder.Services.AddScoped<ICalendarService, GoogleCalendarService>();
+builder.Services.AddScoped<IEventService, EventService>();
+
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+}).AddCookie()
+.AddGoogle(GoogleDefaults.AuthenticationScheme, options =>
+{
+    options.ClientId = googleApiSettings["ClientId"]!;
+    options.ClientSecret = googleApiSettings["ClientSecret"]!;
+    options.CallbackPath = "/signin-google";
+});
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddControllersWithViews();
-
-
-builder.Services.AddScoped<IParsingService, OpenAIParsingService>();
-//builder.Services.AddScoped<ICalendarService, GoogleCalendarService>();
-builder.Services.Configure<GoogleApiSettings>(builder.Configuration.GetSection(nameof(GoogleApiSettings)));
-builder.Services.AddSingleton<ICalendarService>(provider =>
-{   ICalendarService service = GoogleCalendarService
-        .CreateAsync(provider.GetRequiredService<IConfiguration>())
-        .GetAwaiter()
-        .GetResult();
-    return service;
-});
-builder.Services.AddScoped<IEventService, EventService>();
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 

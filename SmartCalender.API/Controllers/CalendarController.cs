@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Google.Apis.Calendar.v3.Data;
+using Microsoft.AspNetCore.Mvc;
 using SmartCalender.API.Models;
 using SmartCalender.API.Services.CalenderService;
 using SmartCalender.API.Services.ParsingSevice;
@@ -17,9 +18,9 @@ namespace SmartCalender.API.Controllers
         }
 
         [HttpPost("create event")]
-        public async Task<ActionResult<EventResponse>> ParseEventFromText([FromBody] CalendarEvent request)
+        public async Task<ActionResult> ParseEventFromText(CalendarEvent request)
         {
-            var parsedEvent = await _googleCalendarService.CreateEvent(request);
+            await _googleCalendarService.CreateEvent(request);
             return Ok();
         }
     }
