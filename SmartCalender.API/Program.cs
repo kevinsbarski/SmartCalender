@@ -6,6 +6,7 @@ using SmartCalender.API.Services.CalenderService;
 using SmartCalender.API.Services.EventService;
 using SmartCalender.API.Services.ParsingSevice;
 using Microsoft.AspNetCore.Authentication.Google;
+using SmartCalender.API.Services.MailSevice;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,8 @@ builder.Services.Configure<GoogleApiSettings>(builder.Configuration.GetSection(n
 builder.Services.AddScoped<IParsingService, OpenAIParsingService>();
 builder.Services.AddScoped<ICalendarService, GoogleCalendarService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IGmailService, GmailApiService>();
+
 
 
 builder.Services.AddAuthentication(options =>
