@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SmartCalender.API.Models;
 using SmartCalender.API.Services.EventService;
 using SmartCalender.API.Services.MailSevice;
+using System.Text;
 
 namespace SmartCalender.API.Controllers
 {
@@ -17,40 +19,37 @@ namespace SmartCalender.API.Controllers
             _eventService = eventService;
         }
 
-        /// <summary>
-        /// Fetch a list of emails. Optional query can be passed (e.g. "is:unread").
-        /// </summary>
         [HttpGet("list")]
         public async Task<IActionResult> ListEmails([FromQuery] string query = null)
         {
-            var messages = await _gmailService.GetEmailAsync(query);
+            var messages = await _gmailService.GetEmailListAsync(query);
             return Ok(messages);
         }
 
-        [HttpGet("Detailed list")]
-        public async Task<IActionResult> DetailedListEmails([FromQuery] string query = null)
-        {
-            var messages = await _gmailService.ListAndFetchFullAsync(query);
-            return Ok(messages);
-        }
-
-
-        /// <summary>
-        /// Fetch a single email by ID, parse it with OpenAI, and create a Google Calendar event.
-        /// </summary>
         [HttpPost("parse-and-create/{emailId}")]
         public async Task<IActionResult> ParseAndCreateEventFromEmail(string emailId)
         {
-            // 1) Get the full email body
-            var emailBody = await _gmailService.GetEmailBodyAsync(emailId);
+            var emailBody = await _gmailService.GetEmailDtoAsync(emailId);
 
-            // 2) Parse it with your existing OpenAI logic
-            var parsedEvent = await _eventService.ParseEventFromText(emailBody);
+            var combinedText = ConvertEmailDtoToString(emailBody);
 
-            // 3) Insert the event into Google Calendar
+            var parsedEvent = await _eventService.ParseEventFromText(combinedText);
+
             var created = await _eventService.CreateCalendarEvent(parsedEvent);
 
             return Ok(created);
         }
+        private static string ConvertEmailDtoToString(EmailDto dto)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Subject: {dto.Subject}");
+            sb.AppendLine($"From: {dto.From}");
+            sb.AppendLine($"DateSent: {dto.DateSent}");
+            sb.AppendLine();
+            sb.AppendLine("---- BODY ----");
+            sb.AppendLine(dto.Body);
+            return sb.ToString();
+        }
+
     }
 }

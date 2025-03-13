@@ -3,6 +3,7 @@ using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
 using Google.Apis.Services;
 using Microsoft.AspNetCore.WebUtilities;
+using SmartCalender.API.Models;
 using SmartCalender.API.Models.Configuration;
 using System.Text;
 
@@ -41,7 +42,7 @@ namespace SmartCalender.API.Services.MailSevice
             var service = await GetAuthorizedGmailServiceAsync();
             var listRequest = service.Users.Messages.List("me");
 
-            listRequest.Fields = "messages(id,threadId,snippet)";
+            listRequest.Fields = "messages(id,threadId)";
 
             if (!string.IsNullOrEmpty(query))
             {
@@ -50,55 +51,77 @@ namespace SmartCalender.API.Services.MailSevice
             var response = await listRequest.ExecuteAsync();
             return response?.Messages.ToList() ?? new List<Message>();
         }
+        public async Task<List<EmailDto>> GetEmailListAsync(string query = null)
+        {
+            var minimalList = await GetEmailAsync(query);
 
-        public async Task<string> GetEmailBodyAsync(string messageId)
+            var emailDtos = new List<EmailDto>();
+            foreach (var msg in minimalList)
+            {
+                var singleDto = await GetEmailDtoAsync(msg.Id);
+                emailDtos.Add(singleDto);
+            }
+
+            return emailDtos;
+        }
+        public async Task<EmailDto> GetEmailDtoAsync(string messageId)
         {
             var service = await GetAuthorizedGmailServiceAsync();
             var getRequest = service.Users.Messages.Get("me", messageId);
+
             getRequest.Format = UsersResource.MessagesResource.GetRequest.FormatEnum.Full;
 
             var message = await getRequest.ExecuteAsync();
+            
+            string fromValue = "";
+            string dateValue = "";
+            string subjectValue = "";
 
-            string emailBody = "";
-            if(message.Payload?.Parts != null)
+            if (message.Payload?.Headers != null)
+            {
+                var fromHeader = message.Payload.Headers
+                    .FirstOrDefault(h => h.Name.Equals("From", StringComparison.OrdinalIgnoreCase));
+                if (fromHeader != null)
+                    fromValue = fromHeader.Value;
+
+                var dateHeader = message.Payload.Headers
+                    .FirstOrDefault(h => h.Name.Equals("Date", StringComparison.OrdinalIgnoreCase));
+                if (dateHeader != null)
+                    dateValue = dateHeader.Value;
+
+                var subjectHeader = message.Payload.Headers
+                    .FirstOrDefault(h => h.Name.Equals("Subject", StringComparison.OrdinalIgnoreCase));
+                if (subjectHeader != null)
+                    subjectValue = subjectHeader.Value;
+            }
+
+            string bodyText = "";
+            if (message.Payload?.Parts != null)
             {
                 foreach (var part in message.Payload.Parts)
                 {
-                    if(part.MimeType == "text/plain" && part.Body?.Data != null)
+                    if (part.MimeType == "text/plain" && part.Body?.Data != null)
                     {
-                        emailBody = Base64UrlDecode(part.Body.Data);
+                        bodyText = Base64UrlDecode(part.Body.Data);
                         break;
-
                     }
                 }
             }
             else if (message.Payload?.Body?.Data != null)
             {
-                emailBody = Base64UrlDecode(message.Payload.Body.Data);
+                bodyText = Base64UrlDecode(message.Payload.Body.Data);
             }
-            return emailBody;
 
-        }
-        public async Task<IList<Message>> ListAndFetchFullAsync(string query = null)
-        {
-            // 1) List messages to get IDs
-            var service = await GetAuthorizedGmailServiceAsync();
-            var listRequest = service.Users.Messages.List("me");
-            if (!string.IsNullOrEmpty(query)) listRequest.Q = query;
-            var response = await listRequest.ExecuteAsync();
-            var minimalList = response?.Messages ?? new List<Message>();
-
-            // 2) For each message ID, do a full GET
-            var fullMessages = new List<Message>();
-            foreach (var msg in minimalList)
+            var emailDto = new EmailDto
             {
-                var getRequest = service.Users.Messages.Get("me", msg.Id);
-                getRequest.Format = UsersResource.MessagesResource.GetRequest.FormatEnum.Full;
-                var fullMsg = await getRequest.ExecuteAsync();
+                Id = messageId,
+                Subject = subjectValue,
+                From = fromValue,
+                DateSent = dateValue,
+                Body = bodyText
+            };
 
-                fullMessages.Add(fullMsg);
-            }
-            return fullMessages;
+            return emailDto;
         }
 
         private static string Base64UrlDecode(string input)
