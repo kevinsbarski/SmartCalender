@@ -9,6 +9,7 @@ using System.Runtime;
 
 namespace SmartCalender.API.Services.CalenderService
 {
+
     public class GoogleCalendarService : ICalendarService
     {
         private readonly IGoogleApiSettings _googleApiSettings;
@@ -16,6 +17,11 @@ namespace SmartCalender.API.Services.CalenderService
         public GoogleCalendarService(IGoogleApiSettings googleApiSettings)
         {
             _googleApiSettings = googleApiSettings;
+
+
+
+
+        
 
         }
 
