@@ -17,6 +17,11 @@ namespace SmartCalender.API.Controllers
         // NOTE: Plan assumes logger injection setup in Program.cs/Startup.cs
         private readonly ILogger<WeatherForecastController> _logger;
 
+        private static readonly string[] Summaries = new[]
+        {
+            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+        };
+
         public WeatherForecastController(ILogger<WeatherForecastController> logger)
         {
             _logger = logger;
@@ -31,10 +36,7 @@ namespace SmartCalender.API.Controllers
             // Example placeholder logic: Return a fixed forecast for demonstration.
             // Replace this with your actual forecast retrieval logic.
             // Consider adding randomness or fetching from a mock service if needed.
-            var summaries = new[]
-            {
-                "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-            };
+            
 
             // Simple example: return null if date is too far in the future for this placeholder
             if ((date.Date - DateTime.Today).TotalDays > 14)
@@ -49,7 +51,7 @@ namespace SmartCalender.API.Controllers
             {
                 Date = date, // Use the input date
                 TemperatureC = rng.Next(-20, 55), // Example temperature
-                Summary = summaries[rng.Next(summaries.Length)]  // Example summary
+                Summary = Summaries[rng.Next(Summaries.Length)]  // Example summary
             };
         }
 
@@ -151,7 +153,25 @@ public async Task<IActionResult> GetMonthlyReport()
         return StatusCode(500, "An error occurred");
     }
 }
-    }
+
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+        [HttpGet("forecastSummary")]
+        public IActionResult GetForecastSummary()
+        {
+            try
+            {
+                _logger.LogInformation("Attempting to retrieve a random weather forecast summary.");
+                var currentSummary = Summaries[Random.Shared.Next(Summaries.Length)];
+                _logger.LogInformation("Successfully generated weather forecast summary: {Summary}", currentSummary);
+                return Ok(currentSummary);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred while retrieving the weather forecast summary.");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while processing your request for the weather summary.");
+            }
+        }
 
 [HttpGet("weeklyForecast")]
 [ProducesResponseType(typeof(IEnumerable<WeatherForecast>), StatusCodes.Status200OK)]
@@ -191,4 +211,5 @@ private IEnumerable<WeatherForecast> GenerateWeeklyForecastData()
     })
     .ToList();
 }
+    }
 }
