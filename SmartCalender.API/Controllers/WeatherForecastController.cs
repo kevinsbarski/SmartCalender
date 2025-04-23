@@ -132,39 +132,23 @@ namespace SmartCalender.API.Controllers
         // --- Keep any other existing methods in this controller if it already existed ---
         // (Context did not provide existing methods, so none are included here)
 
-[HttpGet("weeklyReport")]
-[ProducesResponseType(typeof(IEnumerable<WeatherForecast>), StatusCodes.Status200OK)]
-[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-public async Task<ActionResult<IEnumerable<WeatherForecast>>> GetWeeklyReport()
+[HttpGet("monthlyReport")]
+public async Task<IActionResult> GetMonthlyReport()
 {
-    _logger.LogInformation("Generating weekly weather report with high/low temperatures");
-    try
+    _logger.LogInformation("Getting monthly weather report");
+    try 
     {
-        await Task.Delay(50); // Simulate async operation
-        var rng = new Random();
-        var forecasts = Enumerable.Range(0, 7).Select(index =>
+        var report = new List<WeatherForecast>();
+        for (int i = 0; i < 30; i++) 
         {
-            var date = DateTime.Today.AddDays(index);
-            var minTemp = rng.Next(-10, 25);
-            var maxTemp = rng.Next(minTemp + 5, minTemp + 15);
-            return new WeatherForecast
-            {
-                Date = date,
-                TemperatureC = (minTemp + maxTemp) / 2,
-                TemperatureMinC = minTemp,
-                TemperatureMaxC = maxTemp,
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            };
-        }).ToList();
-            
-        _logger.LogInformation("Successfully generated weekly report with {Count} days", forecasts.Count);
-        return Ok(forecasts);
+            report.Add(GetForecastForDate(DateTime.Today.AddDays(i)));
+        }
+        return Ok(report);
     }
     catch (Exception ex)
     {
-        _logger.LogError(ex, "An error occurred while generating the weekly weather report");
-        return StatusCode(StatusCodes.Status500InternalServerError, 
-            "An unexpected error occurred while generating the report");
+        _logger.LogError(ex, "Error generating monthly report");
+        return StatusCode(500, "An error occurred");
     }
 }
     }
