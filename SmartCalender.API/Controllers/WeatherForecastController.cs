@@ -131,5 +131,25 @@ namespace SmartCalender.API.Controllers
 
         // --- Keep any other existing methods in this controller if it already existed ---
         // (Context did not provide existing methods, so none are included here)
+
+[HttpGet("weeklyReport")]
+public async Task<IActionResult> GetWeeklyReport()
+{
+    _logger.LogInformation("Getting weekly weather report");
+    try 
+    {
+        var report = new List<WeatherForecast>();
+        for (int i = 0; i < 7; i++) 
+        {
+            report.Add(GetForecastForDate(DateTime.Today.AddDays(i)));
+        }
+        return Ok(report);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error generating weekly report");
+        return StatusCode(500, "An error occurred");
+    }
+}
     }
 }
