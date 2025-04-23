@@ -152,4 +152,43 @@ public async Task<IActionResult> GetMonthlyReport()
     }
 }
     }
+
+[HttpGet("weeklyForecast")]
+[ProducesResponseType(typeof(IEnumerable<WeatherForecast>), StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+public async Task<ActionResult<IEnumerable<WeatherForecast>>> GetWeeklyForecast()
+{
+    _logger.LogInformation("Getting weekly weather forecast.");
+    try
+    {
+        await Task.Delay(50);
+        var forecasts = GenerateWeeklyForecastData();
+        _logger.LogInformation("Successfully retrieved {Count} days of weekly forecast.", forecasts.Count());
+        return Ok(forecasts);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "An error occurred while getting the weekly forecast.");
+        return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred retrieving the forecast.");
+    }
+}
+
+private IEnumerable<WeatherForecast> GenerateWeeklyForecastData()
+{
+    var rng = new Random();
+    return Enumerable.Range(1, 7).Select(index =>
+    {
+        var minTemp = rng.Next(-5, 20);
+        var maxTemp = rng.Next(minTemp + 2, minTemp + 15);
+        return new WeatherForecast
+        {
+            Date = DateTime.Now.AddDays(index).Date,
+            MinimumTemperatureC = minTemp,
+            MaximumTemperatureC = maxTemp,
+            TemperatureC = (minTemp + maxTemp) / 2,
+            Summary = Summaries[rng.Next(Summaries.Length)]
+        };
+    })
+    .ToList();
+}
 }
