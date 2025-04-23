@@ -11,4 +11,8 @@ namespace SmartCalender.API.Models
         public int TemperatureMinC { get; set; }
         public int TemperatureMaxC { get; set; }
     }
+        public int MinimumTemperatureC { get; set; }
+        public int MaximumTemperatureC { get; set; }
+        public int MinimumTemperatureF => 32 + (int)(MinimumTemperatureC / 0.5556);
+        public int MaximumTemperatureF => 32 + (int)(MaximumTemperatureC / 0.5556);
 }
