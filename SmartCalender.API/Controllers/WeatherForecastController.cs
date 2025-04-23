@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using SmartCalender.API.Models; // Assuming the Model namespace
+using SmartCalender.API.Models;
 using System;
-using Microsoft.Extensions.Logging; // Added for logging example
-using System.Linq; // Added based on placeholder logic needing it
-using System.Collections.Generic; // Added based on placeholder logic needing it
-
+using Microsoft.Extensions.Logging;
+using System.Linq;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
 
 namespace SmartCalender.API.Controllers
 {
